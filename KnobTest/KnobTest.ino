@@ -189,7 +189,8 @@ void loop() {
     }
     else {
       //Scroll?
-      if (functionSelector.KnobPosition > previousFunctionKnobPosition) {
+      if (NUMBER_OF_THROTTLES ==5) {
+         if (functionSelector.KnobPosition > previousFunctionKnobPosition) {
         statusPageScrolledDown = true;
         Serial.println("F scroll down");
       }
@@ -198,6 +199,8 @@ void loop() {
         Serial.println("F scroll up");
       }
       showStatusPage();
+      }
+      
     }
   }
   if (functionSelector.ButtonState != previousFunctionButtonState)
@@ -428,6 +431,7 @@ void showStatusPage() {
   Serial.println("Num throttles: " + String(NUMBER_OF_THROTTLES) + " first " + String(first) + " last " + String(last));
   for (int i = 0; i < 4; i++) {
     int adjustedThrottleIndex = i + scrollIncrement;
+    if (adjustedThrottleIndex >= NUMBER_OF_THROTTLES) continue;
     if (throttles[adjustedThrottleIndex].rosterIndex < 0) {
       String uLine = throttles[adjustedThrottleIndex].mtIndex + ": Unassigned      ";
       lcd.setCursor(0, i);
