@@ -189,18 +189,17 @@ void loop() {
     }
     else {
       //Scroll?
-      if (NUMBER_OF_THROTTLES ==5) {
-         if (functionSelector.KnobPosition > previousFunctionKnobPosition) {
-        statusPageScrolledDown = true;
-        Serial.println("F scroll down");
+      if (NUMBER_OF_THROTTLES == 5) {
+        if (functionSelector.KnobPosition > previousFunctionKnobPosition) {
+          statusPageScrolledDown = true;
+          Serial.println("F scroll down");
+        }
+        else {
+          statusPageScrolledDown = false;
+          Serial.println("F scroll up");
+        }
+        showStatusPage();
       }
-      else {
-        statusPageScrolledDown = false;
-        Serial.println("F scroll up");
-      }
-      showStatusPage();
-      }
-      
     }
   }
   if (functionSelector.ButtonState != previousFunctionButtonState)
@@ -475,8 +474,8 @@ void updateSpeedOnLCD(int throttleIndex) {
   }
   line += " D:" + dir;
   line += " S:";
-  int lineIndex = 0;
-  if (NUMBER_OF_THROTTLES == 5) {
+  int lineIndex = throttleIndex;
+  if (NUMBER_OF_THROTTLES >= 5) {
     if (statusPageScrolledDown) {
       lineIndex = throttleIndex - 1;
       if (throttleIndex == 0) return;
