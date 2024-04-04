@@ -31,41 +31,44 @@ Controller::Controller(String MTIndex, bool IsSelector, int EncoderPinA, int Enc
 bool Controller::CheckMovement() {
   PinA_value = digitalRead(encoderPinA);
   bool movementDetected = false;
+  int movement = 0;
 
-  if (PinA_value != PinA_prev) { // check if knob is rotating
-    // if pin A state changed before pin B, rotation is clockwise
+  if (PinA_value != PinA_prev) {
     movementDetected = true;
 
     if (digitalRead(encoderPinB) != PinA_value) {
       CW = true;
       InternalCount++;
+      movement++;
     } else {
       // if pin B state changed before pin A, rotation is counter-clockwise
       CW = false;
       InternalCount--;
+      movement--;
     }
+    
     int increase = InternalCount % 2;
+
     if (isSelector) {
-      Serial.println("Selector move increase = " + String(increase)+"internal count "+String(InternalCount));
+      Serial.println("Selector move increase = " + String(increase) + "internal count " + String(InternalCount));      
       if (increase == 0) {
         if (CW) {
-          //Serial.print("Clockwise selector ");
           KnobPosition++;
           Serial.println(mtIndex + " CW movement " + String(KnobPosition));
         } else {
-          //Serial.print("Anticlockwise selector ");
           KnobPosition--;
           Serial.println(mtIndex + " AC movement " + String(KnobPosition));
         }
       }
+      else {
+        Serial.println ("No increase internal "+String(InternalCount)+" inc "+String(increase)+" kp "+String(KnobPosition));
+      }
     }
     else {
       if (CW) {
-        //Serial.print("Clockwise selector ");
         KnobPosition++;
         Serial.println(mtIndex + " CW movement " + String(KnobPosition));
       } else {
-        //Serial.print("Anticlockwise selector ");
         KnobPosition--;
         Serial.println(mtIndex + " AC movement " + String(KnobPosition));
       }
@@ -74,11 +77,8 @@ bool Controller::CheckMovement() {
     if (KnobPosition < -1) KnobPosition = -1;
     if (KnobPosition > 126) KnobPosition = 126;
 
-    if (InternalCount < -1) InternalCount = -1;
-    if (InternalCount > 126) InternalCount = 126;
-
-    //InternalCount = KnobPosition;
-
+    if (InternalCount < -32000) InternalCount = -1;
+    if (InternalCount > 32000) InternalCount = -1;
   }
   PinA_prev = PinA_value;
 

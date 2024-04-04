@@ -250,22 +250,25 @@ void loop() {
 
     if (throttles[i].ButtonState != previousButtonState && throttles[i].ButtonState == 0 && previousButtonHeldState != 1) {// && functionSelector.selectionIsChanging <0 && functionSelector.selectionIsChanging <0) { //buttonIsHeld has not yet been processed so this check will think it's held / been held
       //Serial.println(String(i) + " pBHS " + String(previousButtonHeldState) + " c - " + String(throttles[i].buttonIsHeld));
-      if (throttles[i].KnobPosition > 0) {
-        String spd = "M" + throttles[i].mtIndex + "A" + roster[throttles[i].rosterIndex].IdType + roster[throttles[i].rosterIndex].Id + "<;>V0\n";
-        Serial.print("Train moving, emergency stop here - New speed 0 writing " + spd);
-        throttles[i].KnobPosition = 0;
-        roster[throttles[i].rosterIndex].currentSpeed = 0;
-        writeString(spd);
-        updateSpeedOnLCD(i);
-      }
-      else
+      if (throttles[i].rosterIndex > -1)
       {
-        bool oldDir = roster[throttles[i].rosterIndex].currentDirection;
-        roster[throttles[i].rosterIndex].currentDirection = !oldDir;
-        String dir =  "M" + throttles[i].mtIndex + "A" + roster[throttles[i].rosterIndex].IdType + roster[throttles[i].rosterIndex].Id + "<;>R" + String(roster[throttles[i].rosterIndex].currentDirection) + "\n";
-        Serial.print("OK to change direction from " + String(oldDir) + " to " + String(roster[throttles[i].rosterIndex].currentDirection) + " - " + dir);
-        writeString(dir);
-        showStatusPage();
+        if (throttles[i].KnobPosition > 0) {
+          String spd = "M" + throttles[i].mtIndex + "A" + roster[throttles[i].rosterIndex].IdType + roster[throttles[i].rosterIndex].Id + "<;>V0\n";
+          Serial.print("Train moving, emergency stop here - New speed 0 writing " + spd);
+          throttles[i].KnobPosition = 0;
+          roster[throttles[i].rosterIndex].currentSpeed = 0;
+          writeString(spd);
+          updateSpeedOnLCD(i);
+        }
+        else
+        {
+          bool oldDir = roster[throttles[i].rosterIndex].currentDirection;
+          roster[throttles[i].rosterIndex].currentDirection = !oldDir;
+          String dir =  "M" + throttles[i].mtIndex + "A" + roster[throttles[i].rosterIndex].IdType + roster[throttles[i].rosterIndex].Id + "<;>R" + String(roster[throttles[i].rosterIndex].currentDirection) + "\n";
+          Serial.print("OK to change direction from " + String(oldDir) + " to " + String(roster[throttles[i].rosterIndex].currentDirection) + " - " + dir);
+          writeString(dir);
+          showStatusPage();
+        }
       }
     }
 
@@ -609,16 +612,28 @@ void readFromWiiTHrottle() {
       }
       if (actionType == "V") {
         //velocity/speed
-        roster[rosterIndexToUpdate].currentSpeed = actionInstruction.toInt();
-        //Serial.println("Set " + roster[rosterIndexToUpdate].Name + " to speed " + String(roster[rosterIndexToUpdate].currentSpeed));
-        //Serial.println("Action type " + actionType + " instruction " + actionInstruction + " controller " + String(throttleIndex));
-        if (throttles[iThrottleIndex - 1].rosterIndex == rosterIndexToUpdate) {
-          throttles[iThrottleIndex - 1].KnobPosition = roster[rosterIndexToUpdate].currentSpeed;
-          Serial.println("Set active controller roster knob speed");
+        if (throttles[iThrottleIndex - 1].rosterIndex > -1) {
+          int originalKnobPosition = throttles[iThrottleIndex - 1].KnobPosition;
+          int newSpeed = actionInstruction.toInt();
+          int diff = newSpeed -  roster[rosterIndexToUpdate].currentSpeed;
+          if (diff > 5 || diff < -5)
+          {
+            roster[rosterIndexToUpdate].currentSpeed = actionInstruction.toInt();
+            //Serial.println("Set " + roster[rosterIndexToUpdate].Name + " to speed " + String(roster[rosterIndexToUpdate].currentSpeed));
+            //Serial.println("Action type " + actionType + " instruction " + actionInstruction + " controller " + String(throttleIndex));
+            if (throttles[iThrottleIndex - 1].rosterIndex == rosterIndexToUpdate) {
+              throttles[iThrottleIndex - 1].KnobPosition = roster[rosterIndexToUpdate].currentSpeed;
+              Serial.println("Set active controller roster knob speed");
+            }
+            int diff = originalKnobPosition -  roster[rosterIndexToUpdate].currentSpeed;
+            if (!screenMessageTImeoutActive && (diff > 10 || diff < -10)) {
+              //showStatusPage();
+              updateSpeedOnLCD(iThrottleIndex - 1);
+            }
+          }
+
         }
-        if (!screenMessageTImeoutActive) {
-          showStatusPage();
-        }
+
       }
       else if (actionType == "R") {
         //direction
